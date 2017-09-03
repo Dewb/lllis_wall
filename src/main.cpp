@@ -1,4 +1,5 @@
 #include "FastLED.h"
+#include "plasma.h"
 
 #define NUM_LEDS_A 50
 #define NUM_LEDS_B 50
@@ -233,7 +234,7 @@ void testblink() {
 unsigned long lastFrame = 0;
 unsigned long frameLength = 2000;
 
-void loop() {
+void oldloop() {
 
    int x, y;
    unsigned long clock = millis();
@@ -251,7 +252,7 @@ void loop() {
 
       for(y = 0; y < WALL_Y; y++)
       {
-         uint8_t r = random8();
+         uint8_t r = random8(0, 128 );
          if (r < 3)
          {
             wall[WALL_X * y + r + 1] = wall[WALL_X * y + r];
@@ -270,4 +271,40 @@ void loop() {
    //testblink();
 
    arrange(clock);
+}
+
+
+void loop()
+{
+  unsigned long frameCount=25500;  // arbitrary seed to calculate the three time displacement variables t,t2,t3
+  while(1) {
+
+    for (uint8_t y = 0; y < NUM_LEDS; y++) {
+        uint8_t x = 0;
+        //int color = plasma_rgb(frameCount, x, y);
+
+        uint8_t p = plasma(frameCount, x, y);
+
+        uint8_t d = abs(p - 128);
+        uint8_t s = lerp8by8(0, 255, p);
+        uint8_t l = lerp8by8(0.8 * 255, 255, p);
+
+        uint8_t smix = lerp8by8(255, 179, d);
+        uint8_t lmix = lerp8by8(255, 101, d);
+
+        uint16_t index = y;
+
+        CRGB color(0);
+        color.setHSV(lerp8by8(0.7 * 255, 1.0 * 255, p), smix, lmix);
+
+        // channel debugging
+        //color.setHSV(y * 30, 255, 255);
+
+        ledBuffer[index] = color; // color.r << 16 | color.g << 8 | color.b);
+
+    }
+    frameCount++;
+
+    FastLED.show();
+  }
 }
